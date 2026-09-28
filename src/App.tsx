@@ -15,10 +15,11 @@ import {
 } from 'lucide-react';
 import Settings, { DEFAULT_SETTINGS } from './Settings';
 import Onboarding from './Onboarding';
-import { 
-  SigmaConfig, 
-  PluginSettings, 
-  ConfigParseError 
+import { createMarkdownComponents } from './lib/markdown-components';
+import {
+  SigmaConfig,
+  PluginSettings,
+  ConfigParseError
 } from './types/sigma';
 import './App.css';
 
@@ -410,6 +411,15 @@ const App: React.FC = (): React.JSX.Element => {
         className: 'lucide-toolbar-icon',
         title: 'Table',
       },
+      {
+        name: 'diagram',
+        action: (editor: any) => {
+          const cm = editor.codemirror;
+          cm.replaceSelection('```mermaid\ngraph TD;\n    A-->B;\n    A-->C;\n```');
+        },
+        className: 'lucide-toolbar-icon',
+        title: 'Diagram',
+      },
       '|' as const,
       {
         name: 'undo',
@@ -434,6 +444,8 @@ const App: React.FC = (): React.JSX.Element => {
     sideBySideFullscreen: false,
     previewRender: () => '', // Disable built-in preview
   }), []);
+
+  const markdownComponents = useMemo(() => createMarkdownComponents(settings), [settings]);
 
   // Get container classes based on content width setting
   const getContainerClasses = (): string => {
@@ -613,32 +625,7 @@ const App: React.FC = (): React.JSX.Element => {
                     >
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        components={{
-                          // Create a reusable styled component function
-                          ...['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'].reduce((acc, tag) => {
-                            acc[tag] = ({children, ...props}: {children: React.ReactNode; [key: string]: any}) => 
-                              React.createElement(tag, {
-                                ...props, 
-                                style: {
-                                  color: settings.textColor,
-                                  textAlign: settings.blockAlignment
-                                }
-                              }, children);
-                            return acc;
-                          }, {} as Record<string, React.ComponentType<any>>),
-                          blockquote: ({children, ...props}) => (
-                            <blockquote 
-                              {...props} 
-                              style={{
-                                color: settings.textColor, 
-                                borderLeftColor: settings.textColor,
-                                textAlign: settings.blockAlignment
-                              }}
-                            >
-                              {children}
-                            </blockquote>
-                          ),
-                        }}
+                        components={markdownComponents}
                       >
                         {draftContent}
                       </ReactMarkdown>
@@ -668,32 +655,7 @@ const App: React.FC = (): React.JSX.Element => {
               >
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  components={{
-                    // Create a reusable styled component function
-                    ...['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'].reduce((acc, tag) => {
-                      acc[tag] = ({children, ...props}: {children: React.ReactNode; [key: string]: any}) => 
-                        React.createElement(tag, {
-                          ...props, 
-                          style: {
-                            color: settings.textColor,
-                            textAlign: settings.blockAlignment
-                          }
-                        }, children);
-                      return acc;
-                    }, {} as Record<string, React.ComponentType<any>>),
-                    blockquote: ({children, ...props}) => (
-                      <blockquote 
-                        {...props} 
-                        style={{
-                          color: settings.textColor, 
-                          borderLeftColor: settings.textColor,
-                          textAlign: settings.blockAlignment
-                        }}
-                      >
-                        {children}
-                      </blockquote>
-                    ),
-                  }}
+                  components={markdownComponents}
                 >
                   {markdownContent}
                 </ReactMarkdown>
